@@ -9,8 +9,12 @@
 
 body {
   background: #343541;
+  overflow-x: hidden;
 }
 
+::-webkit-scrollbar {
+  display: none; /* Hides the scrollbar in Webkit browsers like Chrome */
+}
 #app {
   width: 100vw;
   height: 100vh;
@@ -126,10 +130,10 @@ form {
 
 textarea {
   width: 100%;
-
+  resize: none;
   color: #fff;
   font-size: 18px;
-
+  user-select: none;
   padding: 10px;
   background: transparent;
   border-radius: 5px;
