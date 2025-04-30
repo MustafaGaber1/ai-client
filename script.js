@@ -9,6 +9,7 @@ const chatContainer = document.querySelector("#chat_container");
 
 let loadInterval;
 
+// Loader function for displaying dots while waiting for a response
 function loader(element) {
   element.textContent = "";
   loadInterval = setInterval(() => {
@@ -20,6 +21,7 @@ function loader(element) {
   }, 300);
 }
 
+// Function to type text into the message
 function typeText(element, text) {
   let index = 0;
 
@@ -33,6 +35,7 @@ function typeText(element, text) {
   }, 20);
 }
 
+// Generate a unique ID for each message
 function generateUniqueId() {
   const timestamp = Date.now();
   const randomNumber = Math.random();
@@ -40,6 +43,7 @@ function generateUniqueId() {
   return `id-${timestamp}-${hexadecimalString}`;
 }
 
+// Function to create chat bubbles (user or bot)
 function chatStripe(isAi, value, uniqueId) {
   return `
     <div class="wrapper ${isAi && "ai"}">
@@ -56,14 +60,17 @@ function chatStripe(isAi, value, uniqueId) {
   `;
 }
 
+// Handle form submission to send the user's message to the backend
 const handleSubmit = async (e) => {
   e.preventDefault();
   const data = new FormData(form);
-  // user's chatstripe
+
+  // User's chatstripe
   chatContainer.innerHTML += chatStripe(false, data.get("prompt"));
 
   form.reset();
-  // bot's chatstripe
+
+  // Bot's chatstripe
   const uniqueId = generateUniqueId();
   chatContainer.innerHTML += chatStripe(true, " ", uniqueId);
   chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -71,28 +78,35 @@ const handleSubmit = async (e) => {
   loader(messageDiv);
 
   // Use the backend URL here (from environment variable)
-  const response = await fetch(`${backendUrl}/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ prompt: data.get("prompt") }),
-  });
+  try {
+    const response = await fetch(`${backendUrl}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt: data.get("prompt") }),
+    });
 
-  clearInterval(loadInterval);
-  messageDiv.innerHTML = "";
+    clearInterval(loadInterval);
+    messageDiv.innerHTML = "";
 
-  if (response.ok) {
-    const data = await response.json();
-    const parsedData = data.bot.trim();
-    typeText(messageDiv, parsedData);
-  } else {
-    const err = await response.text();
-    messageDiv.innerHTML = "Something went wrong";
-    alert(err);
+    if (response.ok) {
+      const data = await response.json();
+      const parsedData = data.bot.trim();
+      typeText(messageDiv, parsedData);
+    } else {
+      const err = await response.text();
+      messageDiv.innerHTML = "Something went wrong";
+      alert(err);
+    }
+  } catch (error) {
+    clearInterval(loadInterval);
+    messageDiv.innerHTML = "Failed to connect to the server";
+    alert("Failed to connect to the backend server.");
   }
 };
 
+// Add event listeners to handle form submission and pressing "Enter"
 form.addEventListener("submit", handleSubmit);
 form.addEventListener("keyup", (e) => {
   if (e.key === "Enter") {
